@@ -1,0 +1,44 @@
+# Internal docs (not for version control)
+docs/
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcworkspace/contents.xcworkspacedata
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Build
+build/
+*.o
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# SPM
+.build/
+.swiftpm/
+
+# Secrets / Config (never commit)
+Secrets.swift
+Config.xcconfig
+*.env
+GoogleService-Info.plist
+
+# 3D models — only mustard.usdz and sunflower.usdz are tracked
+africandaisy.usdz
+lilium.usdz
+orchid.usdz
+rose.usdz

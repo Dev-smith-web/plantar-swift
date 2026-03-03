@@ -1,0 +1,17 @@
+{
+  "images" : [
+    {
+      "filename" : "africandaisy.jpg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "properties" : {
+    "height" : 0.14,
+    "width" : 0.10,
+    "name" : "africandaisy"
+  }
+}
