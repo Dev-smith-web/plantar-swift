@@ -337,8 +337,8 @@ USES: Seeds are edible and used for cooking oil. The plants can extract toxins f
         availability: .summerOnly,
         modelName: "sunflower",
         arImageReferenceName: "sunflower",
-        scale: 1.0,
-        yOffset: 0,
+        scale: 0.08,
+        yOffset: 0.05,
         rootType: .taproot,
         plantParts: [
             PlantPart(id: "ray_florets", name: "Ray Florets", scientificName: "Flores ligulati", function: "Attract pollinators with bright yellow colour", modelPartName: "RayFlorets"),
@@ -947,8 +947,8 @@ USES: Mustard seeds are ground to make mustard condiment. The leaves are eaten a
         availability: .springOnly,
         modelName: "mustard",
         arImageReferenceName: "mustard",
-        scale: 1.0,
-        yOffset: 0.0,
+        scale: 0.05,
+        yOffset: 0.05,
         rootType: .taproot,
         plantParts: [
             PlantPart(id: "mustard_flowers", name: "Flowers", scientificName: "Flores", function: "Attract pollinators with bright yellow petals and produce seeds", modelPartName: "Flowers"),
