@@ -143,8 +143,8 @@ GROWING CONDITIONS: Roses prefer full sun (6+ hours daily), well-drained soil wi
         availability: .seasonal,
         modelName: "rose",
         arImageReferenceName: "rose",
-        scale: 1.0,
-        yOffset: -0.10,
+        scale: 0.08,
+        yOffset: 0.05,
         rootType: .fibrous,
         plantParts: [
             PlantPart(id: "petals", name: "Petals", scientificName: "Tepals", function: "Attract pollinators with color and scent", modelPartName: "Petals"),
@@ -192,8 +192,8 @@ GROWING CONDITIONS: Most orchids prefer indirect light, high humidity (50-70%), 
         availability: .yearRound,
         modelName: "orchid",
         arImageReferenceName: "orchid",
-        scale: 0.8,
-        yOffset: -0.05,
+        scale: 0.08,
+        yOffset: 0.05,
         rootType: .adventitious,
         plantParts: [
             PlantPart(id: "petal", name: "Petals", scientificName: "Tepals", function: "Attract pollinators", modelPartName: "Flower"),
@@ -240,8 +240,8 @@ GROWING CONDITIONS: Lilies prefer full sun to partial shade, well-drained soil, 
         availability: .summerOnly,
         modelName: "lilium",
         arImageReferenceName: "lilium",
-        scale: 1.2,
-        yOffset: -0.15,
+        scale: 0.07,
+        yOffset: 0.05,
         rootType: .bulb,
         plantParts: [
             PlantPart(id: "stamen", name: "Stamen", scientificName: "Androecium", function: "Male reproductive organ producing pollen", modelPartName: "Stamen"),
@@ -289,8 +289,8 @@ SPECIAL ADAPTATION: African daisies exhibit nyctinasty - their flowers close at 
         availability: .seasonal,
         modelName: "africandaisy",
         arImageReferenceName: "africandaisy",
-        scale: 0.9,
-        yOffset: -0.08,
+        scale: 0.10,
+        yOffset: 0.04,
         rootType: .fibrous,
         plantParts: [
             PlantPart(id: "ray", name: "Ray Florets", scientificName: "Flores radii", function: "Attract pollinators (look like petals)", modelPartName: nil),
@@ -354,7 +354,9 @@ USES: Seeds are edible and used for cooking oil. The plants can extract toxins f
             "The tallest sunflower ever grown was over 30 feet tall!"
         ],
         quizQuestions: [
-            QuizQuestion(id: "sunflower_q1", question: "What is heliotropism?", options: ["Growing in shade", "Following the sun", "Blooming at night", "Growing toward water"], correctAnswerIndex: 1, explanation: "Heliotropism is the movement of plants to follow the sun across the sky.")
+            QuizQuestion(id: "sunflower_q1", question: "What is heliotropism?", options: ["Growing in shade", "Following the sun", "Blooming at night", "Growing toward water"], correctAnswerIndex: 1, explanation: "Heliotropism is the movement of plants to follow the sun across the sky."),
+            QuizQuestion(id: "sunflower_q2", question: "What type of root system does a sunflower have?", options: ["Fibrous", "Bulb", "Taproot", "Adventitious"], correctAnswerIndex: 2, explanation: "Sunflowers have a deep taproot that can extend over 6 feet into the soil for water and stability."),
+            QuizQuestion(id: "sunflower_q3", question: "A sunflower head is actually made up of how many tiny flowers?", options: ["About 10", "About 100", "Up to 2,000", "Exactly 500"], correctAnswerIndex: 2, explanation: "A single sunflower head can contain up to 2,000 tiny individual flowers called florets.")
         ]
     ),
 
