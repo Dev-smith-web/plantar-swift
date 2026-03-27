@@ -6,7 +6,7 @@ import Combine
 // MARK: - API Configuration
 // The API key is read from Info.plist (key: "PerenualAPIKey").
 // To set it up in Xcode: select the project → target → Info tab → add "PerenualAPIKey" with the key value.
-// NEVER hardcode the key here. Ask the client to rotate sk-9fkG696d995b88f8414408 as it was previously exposed.
+// NEVER hardcode the key here — always read it from Info.plist.
 private let perenualAPIKey: String = {
     guard let key = Bundle.main.infoDictionary?["PerenualAPIKey"] as? String, !key.isEmpty else {
         assertionFailure("PerenualAPIKey is missing from Info.plist — add it to the target's Info tab in Xcode.")
