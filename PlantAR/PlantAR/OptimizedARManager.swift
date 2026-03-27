@@ -200,12 +200,14 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
         if let anchor = currentAnchor {
             arView?.scene.removeAnchor(anchor)
         }
-        
+
         stopTimeTracking()
         currentModelEntity = nil
         currentPivotEntity = nil
         currentAnchor = nil
         modelLoaded = false
+        isLoading = false
+        error = nil
     }
     
     func pauseARSession() {

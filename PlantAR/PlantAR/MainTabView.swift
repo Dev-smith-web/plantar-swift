@@ -164,6 +164,12 @@ struct MainTabView: View {
     @EnvironmentObject var auth: AuthService
     @EnvironmentObject var persistence: PersistenceService
     @State private var selectedTab: Int = 0
+    @State private var showCompleteProfile = false
+
+    private var profileIncomplete: Bool {
+        (auth.currentStudentName ?? "").trimmingCharacters(in: .whitespaces).isEmpty ||
+        auth.classCode.trimmingCharacters(in: .whitespaces).isEmpty
+    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -204,6 +210,118 @@ struct MainTabView: View {
                 .tag(3)
         }
         .tint(.plantPrimary)
+        .sheet(isPresented: $showCompleteProfile) {
+            CompleteProfileView()
+                .environmentObject(auth)
+                .interactiveDismissDisabled(true)
+        }
+        .onAppear {
+            showCompleteProfile = profileIncomplete
+        }
+        .onChange(of: auth.currentStudentName) { _, _ in
+            showCompleteProfile = profileIncomplete
+        }
+        .onChange(of: auth.classCode) { _, _ in
+            showCompleteProfile = profileIncomplete
+        }
+    }
+}
+
+// MARK: - Complete Profile Sheet
+
+struct CompleteProfileView: View {
+    @EnvironmentObject var auth: AuthService
+    @State private var name = ""
+    @State private var classCode = ""
+    @State private var isLoading = false
+    @State private var errorMessage = ""
+
+    private var isFormValid: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && classCode.count == 6
+    }
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: PlantSpacing.xxl) {
+                    VStack(alignment: .leading, spacing: PlantSpacing.sm) {
+                        Text("Complete Your Profile")
+                            .font(.displayLarge)
+                            .foregroundColor(.textPrimary)
+                        Text("Your name and class code are missing. Please fill them in to continue.")
+                            .font(.bodyMedium)
+                            .foregroundColor(.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, PlantSpacing.lg)
+
+                    VStack(spacing: PlantSpacing.lg) {
+                        FormField(
+                            title: "Your Name",
+                            placeholder: "Enter your full name",
+                            icon: "person.fill",
+                            text: $name
+                        )
+                        FormField(
+                            title: "Class Code",
+                            placeholder: "6-digit code from teacher",
+                            icon: "number",
+                            text: $classCode,
+                            autocapitalization: .characters,
+                            characterLimit: 6
+                        )
+                    }
+
+                    if !errorMessage.isEmpty {
+                        HStack(spacing: PlantSpacing.sm) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.botanicalError)
+                            Text(errorMessage)
+                                .font(.bodySmall)
+                                .foregroundColor(.botanicalError)
+                            Spacer()
+                        }
+                        .padding(PlantSpacing.md)
+                        .background(Color.botanicalError.opacity(0.1))
+                        .cornerRadius(PlantRadius.sm)
+                    }
+
+                    Spacer(minLength: PlantSpacing.xxl)
+
+                    Button(action: save) {
+                        HStack(spacing: PlantSpacing.sm) {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text("Save & Continue")
+                                Image(systemName: "arrow.right")
+                            }
+                        }
+                    }
+                    .buttonStyle(PlantPrimaryButtonStyle(isEnabled: isFormValid && !isLoading))
+                    .disabled(!isFormValid || isLoading)
+                }
+                .padding(.horizontal, PlantSpacing.xl)
+                .padding(.bottom, PlantSpacing.xxl)
+            }
+            .background(Color.pageBackground)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func save() {
+        isLoading = true
+        errorMessage = ""
+        Task {
+            do {
+                try await auth.updateProfile(name: name, classCode: classCode)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isLoading = false
+        }
     }
 }
 
@@ -2253,6 +2371,7 @@ struct SettingsTab: View {
     @EnvironmentObject var persistence: PersistenceService
     @AppStorage("showScientificNames") private var showScientificNames = false
     @AppStorage("dailyReminder") private var dailyReminder = false
+    @State private var showAbout = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -2342,11 +2461,43 @@ struct SettingsTab: View {
                 SettingsSection(title: "SUPPORT") {
                     MerlinSettingsRow(title: "Help", showChevron: true)
                     Divider().padding(.leading, 20)
-                    MerlinSettingsRow(title: "About PlantAR", showChevron: true)
+                    Button(action: { showAbout = true }) {
+                        MerlinSettingsRow(title: "About PlantAR", showChevron: true)
+                    }
                     Divider().padding(.leading, 20)
                     MerlinSettingsRow(title: "Tell a Friend", showChevron: true)
                     Divider().padding(.leading, 20)
-                    MerlinSettingsRow(title: "Send Us Feedback", showChevron: true)
+                    Button(action: {
+                        if let url = URL(string: "mailto:support@plantar.app?subject=PlantAR%20Feedback") {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        MerlinSettingsRow(title: "Send Us Feedback", showChevron: true)
+                    }
+                }
+                .sheet(isPresented: $showAbout) {
+                    VStack(spacing: 20) {
+                        Image(systemName: "leaf.fill")
+                            .font(.system(size: 52))
+                            .foregroundColor(.plantPrimary)
+                            .padding(.top, 40)
+                        Text("PlantAR")
+                            .font(.system(size: 28, weight: .bold))
+                        Text("Version 1.0 (2026)")
+                            .font(.system(size: 15))
+                            .foregroundColor(.secondary)
+                        Text("PlantAR is an augmented reality plant education app designed for students to explore and learn about plants in an interactive way.\n\nPoint your camera at a PlantAR card to bring plants to life in 3D — then tap parts of the model to discover their functions.")
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 28)
+                        Spacer()
+                        Button("Close") { showAbout = false }
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(.plantPrimary)
+                            .padding(.bottom, 40)
+                    }
+                    .presentationDetents([.medium])
                 }
 
                 // Legal
@@ -2646,6 +2797,21 @@ struct ARScanView: View {
                     .presentationDetents([.medium, .large])
             }
         }
+        .overlay(alignment: .bottom) {
+            if let errorMessage = arManager.error {
+                Text(errorMessage)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.red.opacity(0.85))
+                    .cornerRadius(12)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 120)
+                    .transition(.opacity)
+            }
+        }
         .statusBarHidden(true)
     }
 }
@@ -2808,6 +2974,7 @@ struct ARViewContainer: UIViewRepresentable {
                     DispatchQueue.main.async {
                         self.detectedPlantBinding?.wrappedValue = plant
                     }
+                    arManager.removePlant()
                     arManager.loadPlantModelAsync(plant, on: imageAnchor, in: arView)
                 } else {
                     print("[AR] Unknown image detected: \(detectedImageName)")
@@ -2828,6 +2995,7 @@ struct ARViewContainer: UIViewRepresentable {
                     DispatchQueue.main.async {
                         self.detectedPlantBinding?.wrappedValue = plant
                     }
+                    arManager.removePlant()
                     arManager.loadPlantModelAsync(plant, on: imageAnchor, in: arView)
                 }
             }
