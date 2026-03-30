@@ -57,20 +57,27 @@ class AuthService: ObservableObject {
                 "createdAt": FieldValue.serverTimestamp()
             ])
         } else {
-            // Sign in — returning student
-            let result = try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
-            // Update name/classCode in case they changed
-            try await db.collection("students").document(result.user.uid).setData([
-                "name": name.isEmpty ? (currentStudentName ?? "") : name,
-                "email": normalizedEmail,
-                "classCode": formattedCode.isEmpty ? classCode : formattedCode,
-                "updatedAt": FieldValue.serverTimestamp()
-            ], merge: true)
+            // Sign in — returning student, profile already exists in Firestore
+            try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
         }
         // Auth state listener updates published properties automatically
     }
 
     func logout() {
         try? Auth.auth().signOut()
+    }
+
+    func updateProfile(name: String, classCode: String) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let trimmedName = name.trimmingCharacters(in: .whitespaces)
+        let trimmedCode = classCode.uppercased().trimmingCharacters(in: .whitespaces)
+        try await db.collection("students").document(uid).updateData([
+            "name": trimmedName,
+            "classCode": trimmedCode
+        ])
+        await MainActor.run {
+            self.currentStudentName = trimmedName
+            self.classCode = trimmedCode
+        }
     }
 }
