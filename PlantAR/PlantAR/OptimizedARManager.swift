@@ -19,6 +19,7 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
     private var currentAnchor: AnchorEntity?
     private var currentModelEntity: ModelEntity?
     private var currentPivotEntity: Entity?
+    private var initialModelScale: SIMD3<Float> = [1, 1, 1]
     
     private var startTime: Date = Date()
     private var timeSpentTimer: Timer?
@@ -92,6 +93,7 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
         self.currentAnchor = anchorEntity
         self.currentModelEntity = model
         self.currentPivotEntity = pivot
+        self.initialModelScale = model.scale
         self.modelLoaded = true
         self.isLoading = false
         
@@ -134,9 +136,9 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
     func applyZoom(_ scale: Float, plant: Plant) {
         guard let model = currentModelEntity else { return }
         let newScale = model.scale * scale
-        
-        // Ensure student doesn't zoom too far in or out
-        model.scale = simd_clamp(newScale, [plant.minZoom], [plant.maxZoom])
+        let minScale = initialModelScale * plant.minZoom
+        let maxScale = initialModelScale * plant.maxZoom
+        model.scale = simd_clamp(newScale, minScale, maxScale)
     }
     
     func highlightPart(named partName: String) {

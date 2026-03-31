@@ -1198,13 +1198,13 @@ struct PhotoSuggestionRow: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(plant.commonName)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.textPrimary)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.black)
 
                     Text(plant.scientificName)
                         .font(.system(size: 15))
                         .italic()
-                        .foregroundColor(.textSecondary)
+                        .foregroundColor(Color(white: 0.3))
 
                     // Rarity badge
                     HStack(spacing: 4) {
@@ -2789,6 +2789,11 @@ struct ARScanView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: arManager.tappedPart != nil)
+        .onChange(of: arManager.modelLoaded) { _, loaded in
+            if loaded, detectedPlant != nil {
+                showPlantInfo = true
+            }
+        }
         .sheet(isPresented: $showPlantInfo) {
             if let plant = detectedPlant {
                 MerlinStylePlantInfoSheet(plant: plant, arManager: arManager)
