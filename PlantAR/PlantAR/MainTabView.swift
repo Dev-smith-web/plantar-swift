@@ -1601,9 +1601,6 @@ struct PlantDetailView: View {
     @State private var showARView = false
     @State private var fetchedImageURL: String? = nil
     @State private var isLoadingImage = false
-    #if DEBUG
-    @State private var showDebugInfoSheet = false
-    #endif
 
     // Hardiness/Range map data from API
     @State private var hardinessMapURL: String? = nil
@@ -1950,22 +1947,6 @@ struct PlantDetailView: View {
                                 }
                                 .padding(.top, 12)
                             }
-                            #if DEBUG
-                            Button(action: { showDebugInfoSheet = true }) {
-                                HStack {
-                                    Image(systemName: "hammer.fill")
-                                    Text("DEBUG — Preview Info Sheet")
-                                }
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.orange)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.orange.opacity(0.1))
-                                .cornerRadius(12)
-                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.4)))
-                            }
-                            .padding(.top, 8)
-                            #endif
 
                             Spacer().frame(height: 100)
                         }
@@ -1998,13 +1979,6 @@ struct PlantDetailView: View {
                     .environmentObject(persistence)
                     .environmentObject(auth)
             }
-            #if DEBUG
-            .sheet(isPresented: $showDebugInfoSheet) {
-                MerlinStylePlantInfoSheet(plant: plant, arManager: nil)
-                    .environmentObject(persistence)
-                    .environmentObject(auth)
-            }
-            #endif
         }
     }
 
