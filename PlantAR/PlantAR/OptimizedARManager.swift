@@ -85,7 +85,16 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
         model.position.y = plant.yOffset
         model.position.x = plant.xOffset
         model.scale = [plant.scale, plant.scale, plant.scale]
-        
+
+        // Apply initial orientation (fixes models that are authored Y-flipped or sideways)
+        let rx = simd_quatf(angle: plant.initialEulerAngles.x, axis: [1, 0, 0])
+        let ry = simd_quatf(angle: plant.initialEulerAngles.y, axis: [0, 1, 0])
+        let rz = simd_quatf(angle: plant.initialEulerAngles.z, axis: [0, 0, 1])
+        model.orientation = rx * ry * rz
+
+        // Ensure all meshes have collision shapes so entity(at:) can detect taps
+        model.generateCollisionShapes(recursive: true)
+
         pivot.addChild(model)
         anchorEntity.addChild(pivot)
         arView.scene.addAnchor(anchorEntity)
