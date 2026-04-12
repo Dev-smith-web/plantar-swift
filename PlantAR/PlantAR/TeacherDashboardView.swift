@@ -102,7 +102,7 @@ struct TeacherOverviewTab: View {
                     }
                     .padding(.horizontal, PlantSpacing.xl)
 
-                    // Recent Activity
+                    // Top Performers
                     if !students.isEmpty {
                         VStack(alignment: .leading, spacing: PlantSpacing.md) {
                             Text("Top Performers")
@@ -111,6 +111,20 @@ struct TeacherOverviewTab: View {
 
                             ForEach(students.prefix(3)) { student in
                                 TopStudentRow(student: student)
+                            }
+                        }
+                        .padding(.horizontal, PlantSpacing.xl)
+                    }
+
+                    // Recent Activity Feed
+                    if !persistence.recentScans.isEmpty {
+                        VStack(alignment: .leading, spacing: PlantSpacing.md) {
+                            Text("Recent Activity")
+                                .font(.titleMedium)
+                                .foregroundColor(.textPrimary)
+
+                            ForEach(persistence.recentScans.prefix(5)) { scan in
+                                RecentScanRow(scan: scan)
                             }
                         }
                         .padding(.horizontal, PlantSpacing.xl)
@@ -240,6 +254,47 @@ struct TopStudentRow: View {
     }
 }
 
+// MARK: - Recent Scan Row
+
+struct RecentScanRow: View {
+    let scan: PersistenceService.RecentScanItem
+
+    var plantName: String {
+        plantDatabase.first(where: { $0.id == scan.plantID })?.commonName ?? scan.plantID.capitalized
+    }
+
+    var body: some View {
+        HStack(spacing: PlantSpacing.md) {
+            ZStack {
+                Circle()
+                    .fill(Color.plantPrimary.opacity(0.1))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "leaf.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(.plantPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(scan.studentName)
+                    .font(.titleSmall)
+                    .foregroundColor(.textPrimary)
+                Text("Scanned \(plantName)")
+                    .font(.caption)
+                    .foregroundColor(.textSecondary)
+            }
+
+            Spacer()
+
+            Text(scan.scannedDate.formatted(.relative(presentation: .named)))
+                .font(.caption)
+                .foregroundColor(.textTertiary)
+        }
+        .padding(PlantSpacing.md)
+        .background(Color.cardBackground)
+        .cornerRadius(PlantRadius.md)
+    }
+}
+
 // MARK: - Students Tab
 
 struct TeacherStudentsTab: View {
@@ -310,9 +365,11 @@ struct TeacherStudentsTab: View {
 
 struct StudentDetailCard: View {
     let student: PersistenceService.StudentSummary
+    @State private var expanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: PlantSpacing.md) {
+            // Header row
             HStack {
                 ZStack {
                     Circle()
@@ -351,6 +408,7 @@ struct StudentDetailCard: View {
 
             Divider()
 
+            // Summary stats row
             HStack(spacing: PlantSpacing.xl) {
                 HStack(spacing: PlantSpacing.xs) {
                     Image(systemName: "leaf.fill")
@@ -365,9 +423,47 @@ struct StudentDetailCard: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 12))
                         .foregroundColor(.botanicalSuccess)
-                    Text("\(student.quizCount) quizzes")
+                    Text("\(student.quizCount) quizzes done")
                         .font(.caption)
                         .foregroundColor(.textSecondary)
+                }
+
+                Spacer()
+
+                if !student.scannedPlants.isEmpty {
+                    Button(action: { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } }) {
+                        HStack(spacing: 4) {
+                            Text("Plants")
+                                .font(.caption)
+                                .foregroundColor(.teacherBlue)
+                            Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.teacherBlue)
+                        }
+                    }
+                }
+            }
+
+            // Per-plant breakdown (expandable)
+            if expanded {
+                Divider()
+                VStack(alignment: .leading, spacing: PlantSpacing.xs) {
+                    ForEach(student.scannedPlants.sorted(by: { $0.key < $1.key }), id: \.key) { plantID, quizDone in
+                        let plantName = plantDatabase.first(where: { $0.id == plantID })?.commonName ?? plantID.capitalized
+                        HStack(spacing: PlantSpacing.xs) {
+                            Image(systemName: quizDone ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 12))
+                                .foregroundColor(quizDone ? .botanicalSuccess : .textTertiary)
+                            Text(plantName)
+                                .font(.caption)
+                                .foregroundColor(.textSecondary)
+                            if quizDone {
+                                Text("· Quiz done")
+                                    .font(.caption)
+                                    .foregroundColor(.botanicalSuccess)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -380,6 +476,7 @@ struct StudentDetailCard: View {
 // MARK: - Plants Tab
 
 struct TeacherPlantsTab: View {
+    @EnvironmentObject var teacherAuth: TeacherAuthService
     @EnvironmentObject var persistence: PersistenceService
 
     var body: some View {
@@ -392,7 +489,7 @@ struct TeacherPlantsTab: View {
                             .font(.displayLarge)
                             .foregroundColor(.textPrimary)
 
-                        Text("See how students interact with each plant")
+                        Text("Total scans per plant across all students")
                             .font(.bodyMedium)
                             .foregroundColor(.textSecondary)
                     }
@@ -400,9 +497,9 @@ struct TeacherPlantsTab: View {
                     .padding(.horizontal, PlantSpacing.xl)
                     .padding(.top, PlantSpacing.md)
 
-                    // Plant List
+                    // Only show plants that have an AR model
                     VStack(spacing: PlantSpacing.md) {
-                        ForEach(plantDatabase) { plant in
+                        ForEach(plantDatabase.filter { $0.hasARModel }) { plant in
                             PlantEngagementCard(plant: plant)
                         }
                     }
@@ -412,6 +509,9 @@ struct TeacherPlantsTab: View {
             }
             .background(Color.pageBackground)
             .navigationBarHidden(true)
+        }
+        .task {
+            await persistence.refreshStudentSummaries(for: teacherAuth.classCode ?? "")
         }
     }
 }
@@ -423,11 +523,11 @@ struct PlantEngagementCard: View {
     @EnvironmentObject var persistence: PersistenceService
 
     var scans: Int {
-        persistence.myGarden.filter { $0.plantID == plant.id }.count
+        persistence.classPlantScanCounts[plant.id] ?? 0
     }
 
     var quizzes: Int {
-        persistence.myGarden.filter { $0.plantID == plant.id && $0.quizCompleted }.count
+        persistence.studentSummaries.filter { $0.scannedPlants[plant.id] == true }.count
     }
 
     var body: some View {

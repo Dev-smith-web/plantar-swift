@@ -314,7 +314,7 @@ SPECIAL ADAPTATION: African daisies exhibit nyctinasty - their flowers close at 
         ]
     ),
 
-    // MARK: - Additional Plants (No AR Models Yet)
+    // MARK: - Additional Plants
 
     Plant(
         id: "sunflower",
@@ -341,8 +341,13 @@ USES: Seeds are edible and used for cooking oil. The plants can extract toxins f
         availability: .summerOnly,
         modelName: "sunflower",
         arImageReferenceName: "sunflower",
-        scale: 0.004,
+        scale: 0.0008,
         yOffset: 0.02,
+        // sunflower.usdz uses Z-up with no internal part rotations (unlike mustard).
+        // +90° X rotation maps USD Z-up → RealityKit Y-up so the plant stands upright.
+        // Scale 0.0008: part-level USD scale is ~189x (vs mustard's ~1.77x), so a
+        // much smaller app scale is needed to reach the same ~25 cm on-screen height.
+        initialEulerAngles: [.pi/2, 0, 0],
         rootType: .taproot,
         plantParts: [
             PlantPart(id: "ray_florets", name: "Ray Florets", scientificName: "Flores ligulati", function: "Attract pollinators with bright yellow colour", modelPartName: "RayFlorets"),

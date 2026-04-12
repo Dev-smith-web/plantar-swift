@@ -24,6 +24,10 @@ class PersistenceService: ObservableObject {
     @Published var plantOfTheDay: Plant?
     @Published var isSyncing = false
     @Published var studentSummaries: [StudentSummary] = []
+    /// Total scan count per plantID across all students in the class
+    @Published var classPlantScanCounts: [String: Int] = [:]
+    /// The 20 most recent scans across all students, newest first
+    @Published var recentScans: [RecentScanItem] = []
 
     private let db = Firestore.firestore()
     private var gardenListener: ListenerRegistration?
@@ -161,6 +165,16 @@ extension PersistenceService {
         let scannedCount: Int
         let quizCount: Int
         let averageScore: Float
+        /// plantID → quizCompleted; only contains plants the student has scanned
+        let scannedPlants: [String: Bool]
+    }
+
+    struct RecentScanItem: Identifiable {
+        let id: String  // Firestore doc ID
+        let studentName: String
+        let studentEmail: String
+        let plantID: String
+        let scannedDate: Date
     }
 
     /// Fetches all students in a class from Firestore and updates studentSummaries
@@ -172,6 +186,9 @@ extension PersistenceService {
                 .getDocuments()
 
             var summaries: [StudentSummary] = []
+            var plantScanCounts: [String: Int] = [:]
+            var allRecentScans: [RecentScanItem] = []
+
             for doc in snapshot.documents {
                 let data = doc.data()
                 let uid = doc.documentID
@@ -185,17 +202,47 @@ extension PersistenceService {
                 let scores = completed.compactMap { $0.data()["quizScore"] as? Float }
                 let avgScore = completed.isEmpty ? 0 : scores.reduce(0, +) / Float(completed.count)
 
+                // Build per-student plant map and aggregate class totals
+                var scannedPlants: [String: Bool] = [:]
+                for record in allRecords {
+                    let rdata = record.data()
+                    guard let plantID = rdata["plantID"] as? String else { continue }
+                    let quizDone = rdata["quizCompleted"] as? Bool ?? false
+                    scannedPlants[plantID] = quizDone
+                    plantScanCounts[plantID, default: 0] += 1
+
+                    if let ts = rdata["scannedDate"] as? Timestamp {
+                        allRecentScans.append(RecentScanItem(
+                            id: record.documentID,
+                            studentName: name,
+                            studentEmail: email,
+                            plantID: plantID,
+                            scannedDate: ts.dateValue()
+                        ))
+                    }
+                }
+
                 summaries.append(StudentSummary(
                     id: uid,
                     name: name,
                     email: email,
                     scannedCount: allRecords.count,
                     quizCount: completed.count,
-                    averageScore: avgScore
+                    averageScore: avgScore,
+                    scannedPlants: scannedPlants
                 ))
             }
+
             let sorted = summaries.sorted { $0.averageScore > $1.averageScore }
-            await MainActor.run { self.studentSummaries = sorted }
+            let recentSorted = allRecentScans
+                .sorted { $0.scannedDate > $1.scannedDate }
+                .prefix(20)
+
+            await MainActor.run {
+                self.studentSummaries = sorted
+                self.classPlantScanCounts = plantScanCounts
+                self.recentScans = Array(recentSorted)
+            }
         } catch {
             print("Failed to fetch student summaries: \(error)")
         }

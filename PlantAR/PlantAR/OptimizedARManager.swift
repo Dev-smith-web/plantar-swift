@@ -92,8 +92,13 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
         let rz = simd_quatf(angle: plant.initialEulerAngles.z, axis: [0, 0, 1])
         model.orientation = rx * ry * rz
 
-        // Ensure all meshes have collision shapes so entity(at:) can detect taps
+        // Generate collision shapes, then strip them from any mesh that isn't a
+        // named plant part. Some USDZ files include a full-body texture overlay mesh
+        // (e.g. "Meshy_AI_...") at the same level as the part meshes; if it gets a
+        // collision shape it intercepts every tap before the named parts can be hit.
         model.generateCollisionShapes(recursive: true)
+        let partNames = Set(plant.plantParts.compactMap { $0.modelPartName })
+        stripCollisionFromNonParts(in: model, partNames: partNames)
 
         pivot.addChild(model)
         anchorEntity.addChild(pivot)
@@ -176,6 +181,17 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
         }
     }
     
+    /// Removes CollisionComponent from any entity whose name is not in the known
+    /// plant-part set. This prevents full-body overlay meshes from eating taps.
+    private func stripCollisionFromNonParts(in entity: Entity, partNames: Set<String>) {
+        if !partNames.contains(entity.name) {
+            entity.components.remove(CollisionComponent.self)
+        }
+        for child in entity.children {
+            stripCollisionFromNonParts(in: child, partNames: partNames)
+        }
+    }
+
     private func findEntity(named name: String, in parent: Entity) -> Entity? {
         if parent.name == name {
             return parent
