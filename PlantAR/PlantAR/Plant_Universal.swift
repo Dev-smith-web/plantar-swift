@@ -344,10 +344,11 @@ USES: Seeds are edible and used for cooking oil. The plants can extract toxins f
         scale: 0.0008,
         yOffset: 0.02,
         // sunflower.usdz uses Z-up with no internal part rotations (unlike mustard).
-        // +90° X rotation maps USD Z-up → RealityKit Y-up so the plant stands upright.
+        // −90° X rotation maps USD Z-up → RealityKit Y-up (positive 90° aimed the flower
+        // toward the card; flipping to negative corrects the standing orientation).
         // Scale 0.0008: part-level USD scale is ~189x (vs mustard's ~1.77x), so a
         // much smaller app scale is needed to reach the same ~25 cm on-screen height.
-        initialEulerAngles: [.pi/2, 0, 0],
+        initialEulerAngles: [-.pi/2, 0, 0],
         rootType: .taproot,
         plantParts: [
             PlantPart(id: "ray_florets", name: "Ray Florets", scientificName: "Flores ligulati", function: "Attract pollinators with bright yellow colour", modelPartName: "RayFlorets"),
@@ -960,6 +961,9 @@ USES: Mustard seeds are ground to make mustard condiment. The leaves are eaten a
         arImageReferenceName: "mustard",
         scale: 0.05,
         yOffset: 0.05,
+        // mustard.usdz has per-part baked 90° X rotations from Meshy/Blender export.
+        // 180° around X corrects the inversion caused by that bake + RealityKit's coordinate import.
+        initialEulerAngles: [.pi, 0, 0],
         rootType: .taproot,
         plantParts: [
             PlantPart(id: "mustard_flowers", name: "Flowers", scientificName: "Flores", function: "Attract pollinators with bright yellow petals and produce seeds", modelPartName: "Flowers"),

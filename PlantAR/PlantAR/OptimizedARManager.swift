@@ -182,13 +182,18 @@ class OptimizedARManager: NSObject, ARSessionDelegate, ObservableObject {
     }
     
     /// Removes CollisionComponent from any entity whose name is not in the known
-    /// plant-part set. This prevents full-body overlay meshes from eating taps.
-    private func stripCollisionFromNonParts(in entity: Entity, partNames: Set<String>) {
-        if !partNames.contains(entity.name) {
+    /// plant-part set, AND is not a descendant of such a part.
+    /// Propagating `ancestorIsKeptPart` ensures child meshes of named parts (common in
+    /// USDZ hierarchies where geometry lives one level below the named transform node)
+    /// remain hittable by ray casts.
+    private func stripCollisionFromNonParts(in entity: Entity, partNames: Set<String>, ancestorIsKeptPart: Bool = false) {
+        let isNamedPart = partNames.contains(entity.name)
+        let keepCollision = isNamedPart || ancestorIsKeptPart
+        if !keepCollision {
             entity.components.remove(CollisionComponent.self)
         }
         for child in entity.children {
-            stripCollisionFromNonParts(in: child, partNames: partNames)
+            stripCollisionFromNonParts(in: child, partNames: partNames, ancestorIsKeptPart: keepCollision)
         }
     }
 

@@ -2732,10 +2732,14 @@ struct ARScanView: View {
                     .padding(.bottom, 100)
                 } else {
                     if arManager.tappedPart == nil {
-                        HStack(spacing: 20) {
-                            HintBadge(icon: "hand.pinch", text: "Zoom")
-                            HintBadge(icon: "hand.draw", text: "Rotate")
-                            HintBadge(icon: "hand.tap", text: "Tap parts")
+                        VStack(spacing: 10) {
+                            HStack(spacing: 20) {
+                                HintBadge(icon: "hand.pinch", text: "Zoom")
+                                HintBadge(icon: "hand.draw", text: "Rotate")
+                            }
+                            if let plant = detectedPlant {
+                                PartTapGuide(plant: plant)
+                            }
                         }
                         .padding(.bottom, 100)
                         .transition(.opacity)
@@ -2811,6 +2815,52 @@ struct HintBadge: View {
         .padding(.vertical, 12)
         .background(Color.black.opacity(0.4))
         .cornerRadius(24)
+    }
+}
+
+/// Cycling guide that prompts the student to tap each named plant part in turn.
+struct PartTapGuide: View {
+    let plant: Plant
+
+    @State private var currentIndex = 0
+    private let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+
+    private var tappableParts: [PlantPart] {
+        plant.plantParts.filter { $0.modelPartName != nil }
+    }
+
+    var body: some View {
+        if let part = tappableParts[safe: currentIndex] {
+            HStack(spacing: 10) {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: 16))
+                Text("Tap the")
+                    .font(.system(size: 14))
+                Text(part.name)
+                    .font(.system(size: 14, weight: .bold))
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 12, weight: .bold))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .background(Color.plantPrimary.opacity(0.75))
+            .cornerRadius(24)
+            .id(currentIndex)
+            .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            .animation(.easeInOut(duration: 0.4), value: currentIndex)
+            .onReceive(timer) { _ in
+                withAnimation {
+                    currentIndex = (currentIndex + 1) % max(1, tappableParts.count)
+                }
+            }
+        }
+    }
+}
+
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
 
