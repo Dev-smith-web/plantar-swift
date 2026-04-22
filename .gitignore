@@ -42,3 +42,13 @@ africandaisy.usdz
 lilium.usdz
 orchid.usdz
 rose.usdz
+
+# Root-level loose Swift files (duplicates — real source is in PlantAR/PlantAR/)
+/*.swift
+
+# Raw 3D source exports (app uses .usdz only)
+*.glb
+
+# Deployment document (README serves this purpose in the repo)
+PlantAR_Deployment_Document.md
+PlantAR_Deployment_Document.pdf
