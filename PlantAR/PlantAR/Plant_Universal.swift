@@ -293,8 +293,9 @@ SPECIAL ADAPTATION: African daisies exhibit nyctinasty - their flowers close at 
         availability: .seasonal,
         modelName: "africandaisy",
         arImageReferenceName: "africandaisy",
-        scale: 0.004,
-        yOffset: 0.02,
+        scale: 0.00006,
+        yOffset: 0.01,
+        initialEulerAngles: [-.pi/2, 0, 0],
         rootType: .fibrous,
         plantParts: [
             PlantPart(id: "ray", name: "Ray Florets", scientificName: "Flores radii", function: "Attract pollinators (look like petals)", modelPartName: nil),
